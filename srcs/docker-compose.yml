@@ -1,0 +1,63 @@
+version: "3.7"
+services:
+
+  mariadb:
+    init: true
+    build:
+      context: ./requirements/mariadb
+    volumes:
+      - "db_volume:/var/lib/mysql/"
+    restart: always
+    networks:
+      - my-network
+    env_file:
+      - .env
+
+  wordpress:
+    init: true
+    build:
+      context: ./requirements/wordpress
+    volumes:
+      - "php_nginx_volume:/var/www/html/"
+    restart: always
+    networks:
+      - my-network
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+
+  nginx:
+    init: true
+    build:
+      context: ./requirements/nginx
+    volumes:
+      - "php_nginx_volume:/var/www/html/"
+    restart: always
+    networks:
+      - my-network
+    ports:
+            #      - "8080:80"
+      - "443:443"
+    depends_on:
+      - wordpress
+      - mariadb
+    env_file:
+      - .env
+
+networks:
+  my-network:
+
+volumes:
+  db_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/mdeclerf/data/db_volume
+  php_nginx_volume:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/mdeclerf/data/php_nginx_volume
